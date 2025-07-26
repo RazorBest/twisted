@@ -3241,7 +3241,7 @@ class DNSDatagramProtocol(DNSMixin, protocol.DatagramProtocol):
     def startListening(self):
         self._reactor.listenUDP(0, self, maxPacketSize=512)
 
-    def datagramReceived(self, data, addr):
+    def datagramReceived(self, data: bytes, addr):
         """
         Read a datagram, extract the message in it and trigger the associated
         Deferred.
@@ -3323,7 +3323,7 @@ class DNSProtocol(DNSMixin, protocol.Protocol):
     length = None
     buffer = b""
 
-    def writeMessage(self, message):
+    def writeMessage(self, message: Message):
         """
         Send a message holding DNS queries.
 
@@ -3346,7 +3346,7 @@ class DNSProtocol(DNSMixin, protocol.Protocol):
         """
         self.controller.connectionLost(self)
 
-    def dataReceived(self, data):
+    def dataReceived(self, data: bytes):
         self.buffer += data
 
         while self.buffer:
