@@ -58,7 +58,9 @@ def getSerial(filename="/tmp/twisted-names.serial"):
 
 class FileAuthority(common.ResolverBase):
     """
-    An Authority that is loaded from a file.
+    An Authority that is loaded from a file. An abstraction over an
+    authoritative zone. Only manages names in the zone or
+    its children zones.
 
     This is an abstract class that implements record search logic. To create
     a functional resolver, subclass it and override the L{loadFile} method.
@@ -136,7 +138,8 @@ class FileAuthority(common.ResolverBase):
 
     def _lookup(self, name, cls, type, timeout=None):
         """
-        Determine a response to a particular DNS query.
+        Determine a response to a particular DNS query within the current
+        authoritative zone.
 
         @param name: The name which is being queried and for which to lookup a
             response.
