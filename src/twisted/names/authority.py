@@ -82,13 +82,13 @@ class FileAuthority(common.ResolverBase):
     _ADDITIONAL_PROCESSING_TYPES = (dns.CNAME, dns.MX, dns.NS)
     _ADDRESS_TYPES = (dns.A, dns.AAAA)
 
-    soa = None
-    records = None
-
     def __init__(self, filename):
         common.ResolverBase.__init__(self)
-        self.loadFile(filename)
+        self.soa = None
+        self.records = None
         self._cache = {}
+
+        self.loadFile(filename)
 
     def __setstate__(self, state):
         self.__dict__ = state
@@ -280,6 +280,7 @@ class PySourceAuthority(FileAuthority):
             if isinstance(record, dns.Record_SOA):
                 self.soa = (name, record)
             self.records.setdefault(name, []).append(record)
+
     def wrapRecord(self, type):
         def wrapRecordFunc(name, *arg, **kw):
             return (dns.domainString(name), type(*arg, **kw))
@@ -499,7 +500,9 @@ class BindAuthority(FileAuthority):
         type = line[0]
         rdata = line[1:]
 
-        fullDomain, record = self.buildRecord(owner, ttl, nativeString(type), domain, nativeString(cls), rdata)
+        fullDomain, record = self.buildRecord(
+            owner, ttl, nativeString(type), domain, nativeString(cls), rdata
+        )
         if nativeString(type) == "SOA":
             self.soa = (fullDomain.lower(), record)
         self.records.setdefault(fullDomain, []).append(record)

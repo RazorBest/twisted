@@ -53,6 +53,13 @@ soa_record = dns.Record_SOA(
     ttl=1,
 )
 
+zone_records = {
+    b"test-domain.com": [
+        soa_record,
+        dns.Record_A(b"127.0.0.1"),
+    ],
+}
+
 reverse_soa = dns.Record_SOA(
     mname=b"93.84.28.in-addr.arpa",
     rname=b"93.84.28.in-addr.arpa",
@@ -616,6 +623,28 @@ class FileAuthorityTests(unittest.TestCase):
     Tests for the basic response record selection code in L{FileAuthority}
     (independent of its fileness).
     """
+
+    def test_multipleInstances(self):
+        """
+        Tests that each FileAuthority instance has separate soa and records
+        attributes.
+        """
+
+        class DummyAuthority(authority.FileAuthority):
+            def loadFile(self, data):
+                self.soa = data[0]
+                self.records = data[1]
+
+        input1 = ((soa_record.mname, soa_record), zone_records)
+        input2 = ((my_soa.mname, my_soa), {})
+
+        auth1 = DummyAuthority(input1)
+        auth2 = DummyAuthority(input2)
+
+        self.assertEqual(auth1.soa, input1[0])
+        self.assertEqual(auth1.records, input1[1])
+        self.assertEqual(auth2.soa, input2[0])
+        self.assertEqual(auth2.records, input2[1])
 
     def test_domainErrorForNameWithCommonSuffix(self):
         """
