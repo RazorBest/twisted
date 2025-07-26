@@ -274,7 +274,7 @@ class NameTests(unittest.TestCase):
         )
 
         msg = dns.Message()
-        msg.fromStr(wire)
+        msg.fromBytes(wire)
 
         self.assertEqual(
             msg.queries,
@@ -307,7 +307,7 @@ class NameTests(unittest.TestCase):
             ],
         )
 
-        enc = msg.toStr()
+        enc = msg.toBytes()
 
         self.assertEqual(enc, wire)
 
@@ -770,20 +770,20 @@ class MessageTests(unittest.SynchronousTestCase):
 
     def test_authenticDataEncode(self):
         """
-        L{dns.Message.toStr} encodes L{dns.Message.authenticData} into
+        L{dns.Message.toBytes} encodes L{dns.Message.authenticData} into
         byte4 of the byte string.
         """
         self.assertEqual(
-            dns.Message(authenticData=1).toStr(), MESSAGE_AUTHENTIC_DATA_BYTES
+            dns.Message(authenticData=1).toBytes(), MESSAGE_AUTHENTIC_DATA_BYTES
         )
 
     def test_authenticDataDecode(self):
         """
-        L{dns.Message.fromStr} decodes byte4 and assigns bit3 to
+        L{dns.Message.fromBytes} decodes byte4 and assigns bit3 to
         L{dns.Message.authenticData}.
         """
         m = dns.Message()
-        m.fromStr(MESSAGE_AUTHENTIC_DATA_BYTES)
+        m.fromBytes(MESSAGE_AUTHENTIC_DATA_BYTES)
 
         self.assertEqual(m.authenticData, 1)
 
@@ -802,20 +802,20 @@ class MessageTests(unittest.SynchronousTestCase):
 
     def test_checkingDisabledEncode(self):
         """
-        L{dns.Message.toStr} encodes L{dns.Message.checkingDisabled} into
+        L{dns.Message.toBytes} encodes L{dns.Message.checkingDisabled} into
         byte4 of the byte string.
         """
         self.assertEqual(
-            dns.Message(checkingDisabled=1).toStr(), MESSAGE_CHECKING_DISABLED_BYTES
+            dns.Message(checkingDisabled=1).toBytes(), MESSAGE_CHECKING_DISABLED_BYTES
         )
 
     def test_checkingDisabledDecode(self):
         """
-        L{dns.Message.fromStr} decodes byte4 and assigns bit4 to
+        L{dns.Message.fromBytes} decodes byte4 and assigns bit4 to
         L{dns.Message.checkingDisabled}.
         """
         m = dns.Message()
-        m.fromStr(MESSAGE_CHECKING_DISABLED_BYTES)
+        m.fromBytes(MESSAGE_CHECKING_DISABLED_BYTES)
 
         self.assertEqual(m.checkingDisabled, 1)
 
@@ -886,7 +886,7 @@ class MessageTests(unittest.SynchronousTestCase):
         be raised when it is parsed.
         """
         msg = dns.Message()
-        self.assertRaises(EOFError, msg.fromStr, b"")
+        self.assertRaises(EOFError, msg.fromBytes, b"")
 
     def test_emptyQuery(self):
         """
@@ -894,7 +894,7 @@ class MessageTests(unittest.SynchronousTestCase):
         as such.
         """
         msg = dns.Message()
-        msg.fromStr(
+        msg.fromBytes(
             b"\x01\x00"  # Message ID
             b"\x00"  # answer bit, opCode nibble, auth bit, trunc bit, recursive bit
             b"\x00"  # recursion bit, empty bit, authenticData bit,
@@ -953,7 +953,7 @@ class MessageTests(unittest.SynchronousTestCase):
         answer = dns.RRHeader(payload=dns.Record_A("1.2.3.4", ttl=0))
         answer.encode(buf)
         message = dns.Message()
-        message.fromStr(
+        message.fromBytes(
             b"\x01\x00"  # Message ID
             # answer bit, opCode nibble, auth bit, trunc bit, recursive bit
             b"\x00"
@@ -977,7 +977,7 @@ class MessageTests(unittest.SynchronousTestCase):
         answer = dns.RRHeader(payload=dns.Record_A("1.2.3.4", ttl=0))
         answer.encode(buf)
         message = dns.Message()
-        message.fromStr(
+        message.fromBytes(
             b"\x01\x00"  # Message ID
             # answer bit, opCode nibble, auth bit, trunc bit, recursive bit
             b"\x04"
@@ -1301,7 +1301,7 @@ class DatagramProtocolTests(unittest.TestCase):
             self.assertEqual(result.answers[0].payload.dottedQuad(), "1.2.3.4")
 
         d.addCallback(cb)
-        self.proto.datagramReceived(m.toStr(), ("127.0.0.1", 21345))
+        self.proto.datagramReceived(m.toBytes(), ("127.0.0.1", 21345))
         return d
 
     def test_queryTimeout(self):
@@ -1356,8 +1356,8 @@ class DatagramProtocolTests(unittest.TestCase):
         message = dns.Message()
         message.id = 1
         message.answers = [dns.RRHeader(payload=dns.Record_A(address="1.2.3.4"))]
-        self.proto.datagramReceived(message.toStr(), ("127.0.0.1", 21345))
-        self.assertEqual(self.controller.messages[-1][0].toStr(), message.toStr())
+        self.proto.datagramReceived(message.toBytes(), ("127.0.0.1", 21345))
+        self.assertEqual(self.controller.messages[-1][0].toBytes(), message.toBytes())
 
 
 class TestTCPController(TestController):
@@ -1430,7 +1430,7 @@ class DNSProtocolTests(unittest.TestCase):
             self.assertEqual(result.answers[0].payload.dottedQuad(), "1.2.3.4")
 
         d.addCallback(cb)
-        s = m.toStr()
+        s = m.toBytes()
         s = struct.pack("!H", len(s)) + s
         self.proto.dataReceived(s)
         return d
@@ -1458,10 +1458,10 @@ class DNSProtocolTests(unittest.TestCase):
         message = dns.Message()
         message.id = 1
         message.answers = [dns.RRHeader(payload=dns.Record_A(address="1.2.3.4"))]
-        string = message.toStr()
+        string = message.toBytes()
         string = struct.pack("!H", len(string)) + string
         self.proto.dataReceived(string)
-        self.assertEqual(self.controller.messages[-1][0].toStr(), message.toStr())
+        self.assertEqual(self.controller.messages[-1][0].toBytes(), message.toBytes())
 
 
 class ReprTests(unittest.TestCase):
@@ -4082,9 +4082,9 @@ class EDNSMessageSpecificsTests(ConstructorTestsMixin, unittest.SynchronousTestC
             repr(m),
         )
 
-    def test_fromStrCallsMessageFactory(self):
+    def test_fromBytesCallsMessageFactory(self):
         """
-        L{dns._EDNSMessage.fromString} calls L{dns._EDNSMessage._messageFactory}
+        L{dns._EDNSMessage.fromBytes} calls L{dns._EDNSMessage._messageFactory}
         to create a new L{dns.Message} instance which is used to decode the
         supplied bytes.
         """
@@ -4094,9 +4094,9 @@ class EDNSMessageSpecificsTests(ConstructorTestsMixin, unittest.SynchronousTestC
             Fake message factory.
             """
 
-            def fromStr(self, *args, **kwargs):
+            def fromBytes(self, *args, **kwargs):
                 """
-                Fake fromStr method which raises the arguments it was passed.
+                Fake fromBytes method which raises the arguments it was passed.
 
                 @param args: positional arguments
                 @param kwargs: keyword arguments
@@ -4106,12 +4106,12 @@ class EDNSMessageSpecificsTests(ConstructorTestsMixin, unittest.SynchronousTestC
         m = dns._EDNSMessage()
         m._messageFactory = FakeMessageFactory
         dummyBytes = object()
-        e = self.assertRaises(RaisedArgs, m.fromStr, dummyBytes)
+        e = self.assertRaises(RaisedArgs, m.fromBytes, dummyBytes)
         self.assertEqual(((dummyBytes,), {}), (e.args, e.kwargs))
 
-    def test_fromStrCallsFromMessage(self):
+    def test_fromBytesCallsFromMessage(self):
         """
-        L{dns._EDNSMessage.fromString} calls L{dns._EDNSMessage._fromMessage}
+        L{dns._EDNSMessage.fromBytes} calls L{dns._EDNSMessage._fromMessage}
         with a L{dns.Message} instance
         """
         m = dns._EDNSMessage()
@@ -4121,9 +4121,9 @@ class EDNSMessageSpecificsTests(ConstructorTestsMixin, unittest.SynchronousTestC
             Fake message factory.
             """
 
-            def fromStr(self, bytes):
+            def fromBytes(self, bytes):
                 """
-                A noop fake version of fromStr
+                A noop fake version of fromBytes
 
                 @param bytes: the bytes to be decoded
                 """
@@ -4135,12 +4135,12 @@ class EDNSMessageSpecificsTests(ConstructorTestsMixin, unittest.SynchronousTestC
             raise RaisedArgs(args, kwargs)
 
         m._fromMessage = fakeFromMessage
-        e = self.assertRaises(RaisedArgs, m.fromStr, b"")
+        e = self.assertRaises(RaisedArgs, m.fromBytes, b"")
         self.assertEqual(((fakeMessage,), {}), (e.args, e.kwargs))
 
-    def test_toStrCallsToMessage(self):
+    def test_toBytesCallsToMessage(self):
         """
-        L{dns._EDNSMessage.toStr} calls L{dns._EDNSMessage._toMessage}
+        L{dns._EDNSMessage.toBytes} calls L{dns._EDNSMessage._toMessage}
         """
         m = dns._EDNSMessage()
 
@@ -4148,12 +4148,12 @@ class EDNSMessageSpecificsTests(ConstructorTestsMixin, unittest.SynchronousTestC
             raise RaisedArgs(args, kwargs)
 
         m._toMessage = fakeToMessage
-        e = self.assertRaises(RaisedArgs, m.toStr)
+        e = self.assertRaises(RaisedArgs, m.toBytes)
         self.assertEqual(((), {}), (e.args, e.kwargs))
 
-    def test_toStrCallsToMessageToStr(self):
+    def test_toBytesCallsToMessageToStr(self):
         """
-        L{dns._EDNSMessage.toStr} calls C{toStr} on the message returned by
+        L{dns._EDNSMessage.toBytes} calls C{toBytes} on the message returned by
         L{dns._EDNSMessage._toMessage}.
         """
         m = dns._EDNSMessage()
@@ -4164,9 +4164,9 @@ class EDNSMessageSpecificsTests(ConstructorTestsMixin, unittest.SynchronousTestC
             Fake Message
             """
 
-            def toStr(self):
+            def toBytes(self):
                 """
-                Fake toStr which returns dummyBytes.
+                Fake toBytes which returns dummyBytes.
 
                 @return: dummyBytes
                 """
@@ -4177,7 +4177,7 @@ class EDNSMessageSpecificsTests(ConstructorTestsMixin, unittest.SynchronousTestC
 
         m._toMessage = fakeToMessage
 
-        self.assertEqual(dummyBytes, m.toStr())
+        self.assertEqual(dummyBytes, m.toBytes())
 
 
 class EDNSMessageEqualityTests(ComparisonTestsMixin, unittest.SynchronousTestCase):
@@ -4426,7 +4426,7 @@ class StandardEncodingTestsMixin:
         An empty message can be encoded.
         """
         self.assertEqual(
-            self.messageFactory(**MessageEmpty.kwargs()).toStr(), MessageEmpty.bytes()
+            self.messageFactory(**MessageEmpty.kwargs()).toBytes(), MessageEmpty.bytes()
         )
 
     def test_emptyMessageDecode(self):
@@ -4434,7 +4434,7 @@ class StandardEncodingTestsMixin:
         An empty message byte sequence can be decoded.
         """
         m = self.messageFactory()
-        m.fromStr(MessageEmpty.bytes())
+        m.fromBytes(MessageEmpty.bytes())
 
         self.assertEqual(m, self.messageFactory(**MessageEmpty.kwargs()))
 
@@ -4443,7 +4443,7 @@ class StandardEncodingTestsMixin:
         A fully populated query message can be encoded.
         """
         self.assertEqual(
-            self.messageFactory(**MessageComplete.kwargs()).toStr(),
+            self.messageFactory(**MessageComplete.kwargs()).toBytes(),
             MessageComplete.bytes(),
         )
 
@@ -4452,7 +4452,7 @@ class StandardEncodingTestsMixin:
         A fully populated message byte string can be decoded.
         """
         m = self.messageFactory()
-        m.fromStr(MessageComplete.bytes()),
+        m.fromBytes(MessageComplete.bytes()),
 
         self.assertEqual(m, self.messageFactory(**MessageComplete.kwargs()))
 
@@ -4466,10 +4466,10 @@ class StandardEncodingTestsMixin:
         rr = dns.RRHeader(b"testname", dns.NULL, payload=rec)
         msg1 = self.messageFactory()
         msg1.answers.append(rr)
-        s = msg1.toStr()
+        s = msg1.toBytes()
 
         msg2 = self.messageFactory()
-        msg2.fromStr(s)
+        msg2.fromBytes(s)
 
         self.assertIsInstance(msg2.answers[0].payload, dns.Record_NULL)
         self.assertEqual(msg2.answers[0].payload.payload, bytes)
@@ -4480,7 +4480,7 @@ class StandardEncodingTestsMixin:
         will have AA bit 0.
         """
         self.assertEqual(
-            self.messageFactory(**MessageNonAuthoritative.kwargs()).toStr(),
+            self.messageFactory(**MessageNonAuthoritative.kwargs()).toBytes(),
             MessageNonAuthoritative.bytes(),
         )
 
@@ -4490,7 +4490,7 @@ class StandardEncodingTestsMixin:
         non-authoritative message byte string are marked as not authoritative.
         """
         m = self.messageFactory()
-        m.fromStr(MessageNonAuthoritative.bytes())
+        m.fromBytes(MessageNonAuthoritative.bytes())
 
         self.assertEqual(m, self.messageFactory(**MessageNonAuthoritative.kwargs()))
 
@@ -4500,7 +4500,7 @@ class StandardEncodingTestsMixin:
         will have AA bit 1.
         """
         self.assertEqual(
-            self.messageFactory(**MessageAuthoritative.kwargs()).toStr(),
+            self.messageFactory(**MessageAuthoritative.kwargs()).toBytes(),
             MessageAuthoritative.bytes(),
         )
 
@@ -4510,7 +4510,7 @@ class StandardEncodingTestsMixin:
         an authoritative message byte string, are marked as authoritative.
         """
         m = self.messageFactory()
-        m.fromStr(MessageAuthoritative.bytes())
+        m.fromBytes(MessageAuthoritative.bytes())
 
         self.assertEqual(m, self.messageFactory(**MessageAuthoritative.kwargs()))
 
@@ -4520,7 +4520,7 @@ class StandardEncodingTestsMixin:
         have TR bit 1.
         """
         self.assertEqual(
-            self.messageFactory(**MessageTruncated.kwargs()).toStr(),
+            self.messageFactory(**MessageTruncated.kwargs()).toBytes(),
             MessageTruncated.bytes(),
         )
 
@@ -4530,7 +4530,7 @@ class StandardEncodingTestsMixin:
         as truncated.
         """
         m = self.messageFactory()
-        m.fromStr(MessageTruncated.bytes())
+        m.fromBytes(MessageTruncated.bytes())
 
         self.assertEqual(m, self.messageFactory(**MessageTruncated.kwargs()))
 
@@ -4605,7 +4605,7 @@ class EDNSMessageEDNSEncodingTests(unittest.SynchronousTestCase):
         an EDNS query never includes OPT records in the additional section.
         """
         m = self.messageFactory()
-        m.fromStr(MessageEDNSQuery.bytes())
+        m.fromBytes(MessageEDNSQuery.bytes())
 
         self.assertEqual(m.additional, [])
 
@@ -4622,7 +4622,7 @@ class EDNSMessageEDNSEncodingTests(unittest.SynchronousTestCase):
         m.additional = [dns._OPTHeader(version=2), dns._OPTHeader(version=3)]
 
         ednsMessage = dns._EDNSMessage()
-        ednsMessage.fromStr(m.toStr())
+        ednsMessage.fromBytes(m.toBytes())
 
         self.assertIsNone(ednsMessage.ednsVersion)
 
@@ -4633,7 +4633,7 @@ class EDNSMessageEDNSEncodingTests(unittest.SynchronousTestCase):
         references to) the original message lists.
         """
         standardMessage = dns.Message()
-        standardMessage.fromStr(MessageEDNSQuery.bytes())
+        standardMessage.fromBytes(MessageEDNSQuery.bytes())
 
         ednsMessage = dns._EDNSMessage._fromMessage(standardMessage)
 
@@ -4650,11 +4650,11 @@ class EDNSMessageEDNSEncodingTests(unittest.SynchronousTestCase):
 
     def test_toMessageCopiesSections(self):
         """
-        L{dns._EDNSMessage.toStr} makes no in place changes to the message
+        L{dns._EDNSMessage.toBytes} makes no in place changes to the message
         instance.
         """
         ednsMessage = dns._EDNSMessage(ednsVersion=1)
-        ednsMessage.toStr()
+        ednsMessage.toBytes()
         self.assertEqual(ednsMessage.additional, [])
 
     def test_optHeaderPosition(self):
@@ -4689,44 +4689,44 @@ class EDNSMessageEDNSEncodingTests(unittest.SynchronousTestCase):
 
     def test_ednsDecode(self):
         """
-        The L(_EDNSMessage} instance created by L{dns._EDNSMessage.fromStr}
+        The L(_EDNSMessage} instance created by L{dns._EDNSMessage.fromBytes}
         derives its edns specific values (C{ednsVersion}, etc) from the supplied
         OPT record.
         """
         m = self.messageFactory()
-        m.fromStr(MessageEDNSComplete.bytes())
+        m.fromBytes(MessageEDNSComplete.bytes())
 
         self.assertEqual(m, self.messageFactory(**MessageEDNSComplete.kwargs()))
 
     def test_ednsEncode(self):
         """
-        The L(_EDNSMessage} instance created by L{dns._EDNSMessage.toStr}
+        The L(_EDNSMessage} instance created by L{dns._EDNSMessage.toBytes}
         encodes its edns specific values (C{ednsVersion}, etc) into an OPT
         record added to the additional section.
         """
         self.assertEqual(
-            self.messageFactory(**MessageEDNSComplete.kwargs()).toStr(),
+            self.messageFactory(**MessageEDNSComplete.kwargs()).toBytes(),
             MessageEDNSComplete.bytes(),
         )
 
     def test_extendedRcodeEncode(self):
         """
-        The L(_EDNSMessage.toStr} encodes the extended I{RCODE} (>=16) by
+        The L(_EDNSMessage.toBytes} encodes the extended I{RCODE} (>=16) by
         assigning the lower 4bits to the message RCODE field and the upper 4bits
         to the OPT pseudo record.
         """
         self.assertEqual(
-            self.messageFactory(**MessageEDNSExtendedRCODE.kwargs()).toStr(),
+            self.messageFactory(**MessageEDNSExtendedRCODE.kwargs()).toBytes(),
             MessageEDNSExtendedRCODE.bytes(),
         )
 
     def test_extendedRcodeDecode(self):
         """
-        The L(_EDNSMessage} instance created by L{dns._EDNSMessage.fromStr}
+        The L(_EDNSMessage} instance created by L{dns._EDNSMessage.fromBytes}
         derives RCODE from the supplied OPT record.
         """
         m = self.messageFactory()
-        m.fromStr(MessageEDNSExtendedRCODE.bytes())
+        m.fromBytes(MessageEDNSExtendedRCODE.bytes())
 
         self.assertEqual(m, self.messageFactory(**MessageEDNSExtendedRCODE.kwargs()))
 
