@@ -66,7 +66,7 @@ class ResolverBase:
         """
         return self._errormap.get(responseCode, DNSUnknownError)
 
-    def query(self, query, timeout=None):
+    def query(self, query: dns.Query, timeout=None):
         try:
             method = self.typeToMethod[query.type]
         except KeyError:
