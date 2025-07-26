@@ -611,7 +611,7 @@ class ResolvConfHandlingTests(unittest.TestCase):
         r._parseCall.cancel()
 
 
-class AuthorityTests(unittest.TestCase):
+class FileAuthorityTests(unittest.TestCase):
     """
     Tests for the basic response record selection code in L{FileAuthority}
     (independent of its fileness).
