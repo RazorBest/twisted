@@ -10,6 +10,8 @@ the query, or someway to specify (authority|ttl|cache behavior|more?)
 """
 
 
+from typing import List
+
 from zope.interface import implementer
 
 from twisted.internet import defer, interfaces
@@ -34,7 +36,7 @@ class ResolverChain(common.ResolverBase):
     Lookup an address using multiple L{IResolver}s
     """
 
-    def __init__(self, resolvers):
+    def __init__(self, resolvers: List[interfaces.IResolver]):
         """
         @type resolvers: L{list}
         @param resolvers: A L{list} of L{IResolver} providers.
