@@ -287,6 +287,20 @@ class IRecord(Interface):
     TYPE = Attribute("An indicator of what kind of record this is.")
 
 
+class IDNSProtocolWriter(Interface):
+    """
+    An L{IDNSProtocolWriter} passes the received messages to the underlying
+    protocol.
+    """
+
+    def writeMessage(message: "Message") -> None:
+        """
+        Write the data contained in the message to the underyling protocol.
+
+        @param message: Message to write.
+        """
+
+
 # Backwards compatibility aliases - these should be deprecated or something I
 # suppose. -exarkun
 from twisted.names.error import (

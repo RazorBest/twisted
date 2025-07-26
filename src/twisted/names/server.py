@@ -20,7 +20,7 @@ for resolvers to deal with.  Fix it.
 import time
 
 from twisted.internet import protocol
-from twisted.names import dns, resolve
+from twisted.names import dns, resolve, common
 from twisted.python import log
 
 
@@ -135,7 +135,9 @@ class DNSServerFactory(protocol.ServerFactory):
         """
         self.connections.remove(protocol)
 
-    def sendReply(self, protocol, message, address):
+    def sendReply(
+        self, protocol: dns.IDNSProtocolWriter, message: dns.Message, address
+    ):
         """
         Send a response C{message} to a given C{address} via the supplied
         C{protocol}.
@@ -173,7 +175,12 @@ class DNSServerFactory(protocol.ServerFactory):
         )
 
     def _responseFromMessage(
-        self, message, rCode=dns.OK, answers=None, authority=None, additional=None
+        self,
+        message: dns.Message,
+        rCode=dns.OK,
+        answers=None,
+        authority=None,
+        additional=None,
     ):
         """
         Generate a L{Message} instance suitable for use as the response to
@@ -254,7 +261,13 @@ class DNSServerFactory(protocol.ServerFactory):
 
         return response
 
-    def gotResolverResponse(self, response, protocol, message, address):
+    def gotResolverResponse(
+        self,
+        response: common.ResolverResponse,
+        protocol: dns.IDNSProtocolWriter,
+        message: dns.Message,
+        address,
+    ):
         """
         A callback used by L{DNSServerFactory.handleQuery} for handling the
         deferred response from C{self.resolver.query}.
@@ -295,7 +308,9 @@ class DNSServerFactory(protocol.ServerFactory):
         if self.cache and l:
             self.cache.cacheResult(message.queries[0], (ans, auth, add))
 
-    def gotResolverError(self, failure, protocol, message, address):
+    def gotResolverError(
+        self, failure, protocol: dns.IDNSProtocolWriter, message: dns.Message, address
+    ):
         """
         A callback used by L{DNSServerFactory.handleQuery} for handling deferred
         errors from C{self.resolver.query}.
@@ -332,7 +347,9 @@ class DNSServerFactory(protocol.ServerFactory):
         self.sendReply(protocol, response, address)
         self._verboseLog("Lookup failed")
 
-    def handleQuery(self, message, protocol, address):
+    def handleQuery(
+        self, message: dns.Message, protocol: dns.IDNSProtocolWriter, address
+    ):
         """
         Called by L{DNSServerFactory.messageReceived} when a query message is
         received.
@@ -373,7 +390,9 @@ class DNSServerFactory(protocol.ServerFactory):
             .addErrback(self.gotResolverError, protocol, message, address)
         )
 
-    def handleInverseQuery(self, message, protocol, address):
+    def handleInverseQuery(
+        self, message: dns.Message, protocol: dns.IDNSProtocolWriter, address
+    ):
         """
         Called by L{DNSServerFactory.messageReceived} when an inverse query
         message is received.
@@ -400,7 +419,9 @@ class DNSServerFactory(protocol.ServerFactory):
         self.sendReply(protocol, message, address)
         self._verboseLog(f"Inverse query from {address!r}")
 
-    def handleStatus(self, message, protocol, address):
+    def handleStatus(
+        self, message: dns.Message, protocol: dns.IDNSProtocolWriter, address
+    ):
         """
         Called by L{DNSServerFactory.messageReceived} when a status message is
         received.
@@ -427,7 +448,9 @@ class DNSServerFactory(protocol.ServerFactory):
         self.sendReply(protocol, message, address)
         self._verboseLog(f"Status request from {address!r}")
 
-    def handleNotify(self, message, protocol, address):
+    def handleNotify(
+        self, message: dns.Message, protocol: dns.IDNSProtocolWriter, address
+    ):
         """
         Called by L{DNSServerFactory.messageReceived} when a notify message is
         received.
@@ -454,7 +477,9 @@ class DNSServerFactory(protocol.ServerFactory):
         self.sendReply(protocol, message, address)
         self._verboseLog(f"Notify message from {address!r}")
 
-    def handleOther(self, message, protocol, address):
+    def handleOther(
+        self, message: dns.Message, protocol: dns.IDNSProtocolWriter, address
+    ):
         """
         Called by L{DNSServerFactory.messageReceived} when a message with
         unrecognised I{OPCODE} is received.
@@ -481,7 +506,7 @@ class DNSServerFactory(protocol.ServerFactory):
         self.sendReply(protocol, message, address)
         self._verboseLog("Unknown op code (%d) from %r" % (message.opCode, address))
 
-    def messageReceived(self, message, proto, address=None):
+    def messageReceived(self, message: dns.Message, proto, address=None):
         """
         L{DNSServerFactory.messageReceived} is called by protocols which are
         under the control of this L{DNSServerFactory} whenever they receive a
@@ -541,7 +566,9 @@ class DNSServerFactory(protocol.ServerFactory):
         else:
             self.handleOther(message, proto, address)
 
-    def allowQuery(self, message, protocol, address):
+    def allowQuery(
+        self, message: dns.Message, protocol: dns.IDNSProtocolWriter, address
+    ):
         """
         Called by L{DNSServerFactory.messageReceived} to decide whether to
         process a received message or to reply with C{dns.EREFUSED}.
