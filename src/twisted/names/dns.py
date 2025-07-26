@@ -2761,7 +2761,7 @@ class Message(tputil.FancyEqMixin):
         """
         return self._recordTypes.get(type, UnknownRecord)
 
-    def toStr(self):
+    def toBytes(self):
         """
         Encode this L{Message} into a byte string in the format described by RFC
         1035.
@@ -2772,7 +2772,7 @@ class Message(tputil.FancyEqMixin):
         self.encode(strio)
         return strio.getvalue()
 
-    def fromStr(self, str):
+    def fromBytes(self, str):
         """
         Decode a byte string in the format described by RFC 1035 into this
         L{Message}.
@@ -2790,12 +2790,12 @@ class _EDNSMessage(tputil.FancyEqMixin):
     Designed for compatibility with L{Message} but with a narrower public
     interface.
 
-    Most importantly, L{_EDNSMessage.fromStr} will interpret and remove I{OPT}
+    Most importantly, L{_EDNSMessage.fromBytes} will interpret and remove I{OPT}
     records that are present in the additional records section.
 
     The I{OPT} records are used to populate certain I{EDNS} specific attributes.
 
-    L{_EDNSMessage.toStr} will add suitable I{OPT} records to the additional
+    L{_EDNSMessage.toBytes} will add suitable I{OPT} records to the additional
     section to represent the extended EDNS information.
 
     @see: U{https://tools.ietf.org/html/rfc6891}
@@ -3044,13 +3044,13 @@ class _EDNSMessage(tputil.FancyEqMixin):
 
         return m
 
-    def toStr(self):
+    def toBytes(self):
         """
         Encode to wire format by first converting to a standard L{dns.Message}.
 
         @return: A L{bytes} string.
         """
-        return self._toMessage().toStr()
+        return self._toMessage().toBytes()
 
     @classmethod
     def _fromMessage(cls, message):
@@ -3113,16 +3113,16 @@ class _EDNSMessage(tputil.FancyEqMixin):
 
         return newMessage
 
-    def fromStr(self, bytes):
+    def fromBytes(self, data: bytes):
         """
         Decode from wire format, saving flags, values and records to this
         L{_EDNSMessage} instance in place.
 
-        @param bytes: The full byte string to be decoded.
-        @type bytes: L{bytes}
+        @param data: The full byte string to be decoded.
+        @type data: L{bytes}
         """
         m = self._messageFactory()
-        m.fromStr(bytes)
+        m.fromBytes(data)
 
         ednsMessage = self._fromMessage(m)
         for attrName in self.compareAttributes:
@@ -3236,7 +3236,7 @@ class DNSDatagramProtocol(DNSMixin, protocol.DatagramProtocol):
 
         @type message: L{Message}
         """
-        self.transport.write(message.toStr(), address)
+        self.transport.write(message.toBytes(), address)
 
     def startListening(self):
         self._reactor.listenUDP(0, self, maxPacketSize=512)
@@ -3248,7 +3248,7 @@ class DNSDatagramProtocol(DNSMixin, protocol.DatagramProtocol):
         """
         m = Message()
         try:
-            m.fromStr(data)
+            m.fromBytes(data)
         except EOFError:
             log.msg("Truncated packet (%d bytes) from %s" % (len(data), addr))
             return
@@ -3329,7 +3329,7 @@ class DNSProtocol(DNSMixin, protocol.Protocol):
 
         @type message: L{Message}
         """
-        s = message.toStr()
+        s = message.toBytes()
         self.transport.write(struct.pack("!H", len(s)) + s)
 
     def connectionMade(self):
@@ -3357,7 +3357,7 @@ class DNSProtocol(DNSMixin, protocol.Protocol):
             if len(self.buffer) >= self.length:
                 myChunk = self.buffer[: self.length]
                 m = Message()
-                m.fromStr(myChunk)
+                m.fromBytes(myChunk)
 
                 try:
                     d, canceller = self.liveMessages[m.id]

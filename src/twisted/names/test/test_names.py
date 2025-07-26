@@ -1179,7 +1179,7 @@ class SecondaryAuthorityTests(unittest.TestCase):
             ]
         )
 
-        data = answer.toStr()
+        data = answer.toBytes()
         proto.dataReceived(pack("!H", len(data)) + data)
 
         result = self.successResultOf(secondary.lookupAddress("example.com"))
