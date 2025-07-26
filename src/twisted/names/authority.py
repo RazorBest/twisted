@@ -136,7 +136,7 @@ class FileAuthority(common.ResolverBase):
                             name, rec.TYPE, dns.IN, rec.ttl or ttl, rec, auth=True
                         )
 
-    def _lookup(self, name, cls, type, timeout=None):
+    def _lookup(self, name: bytes, cls, type, timeout=None):
         """
         Determine a response to a particular DNS query within the current
         authoritative zone.
