@@ -79,7 +79,7 @@ class RootResolverTests(TestCase):
         [(packet, address)] = transport._sentPackets
 
         message = Message()
-        message.fromStr(packet)
+        message.fromBytes(packet)
 
         # It should be a query with the parameters used above.
         self.assertEqual(message.queries, [Query(b"foo.example.com", A, IN)])
@@ -97,7 +97,7 @@ class RootResolverTests(TestCase):
         message.answers.append(
             RRHeader(b"foo.example.com", payload=Record_A("5.8.13.21"))
         )
-        transport._protocol.datagramReceived(message.toStr(), ("1.1.2.3", 1053))
+        transport._protocol.datagramReceived(message.toBytes(), ("1.1.2.3", 1053))
         return response[0]
 
     def test_filteredQuery(self):
