@@ -957,7 +957,7 @@ class _OPTVariableOption(tputil.FancyStrMixin, tputil.FancyEqMixin):
 @implementer(IEncodable)
 class RRHeader(tputil.FancyEqMixin):
     """
-    A resource record header.
+    A resource record header, as specified in RFC1035, section 4.1.3.
 
     @cvar fmt: L{str} specifying the byte format of an RR.
 
@@ -2509,6 +2509,15 @@ class Message(tputil.FancyEqMixin):
     )
 
     headerFmt = "!H2B4H"
+    """
+    Format corresponds to RFC1035 section 4.1.1. The fields are:
+        - 2 byte ID
+        - 2 bytes of various flags and codes
+        - 2 bytes of QDCOUNT
+        - 2 bytes of ANCOUNT
+        - 2 bytes of NSCOUNT
+        - 2 bytes of ARCOUNT
+    """
     headerSize = struct.calcsize(headerFmt)
 
     # Question, answer, additional, and nameserver lists
@@ -2690,6 +2699,9 @@ class Message(tputil.FancyEqMixin):
         strio.write(body)
 
     def decode(self, strio, length=None):
+        """
+        Parse the message according to RFC1035 section 4.1.
+        """
         self.maxSize = 0
         header = readPrecisely(strio, self.headerSize)
         r = struct.unpack(self.headerFmt, header)
@@ -2719,6 +2731,11 @@ class Message(tputil.FancyEqMixin):
             self.parseRecords(l, n, strio)
 
     def parseRecords(self, list, num, strio):
+        """
+        Parse an answer, authority, or additional section of a message,
+        composed of num amount resource records,
+        according to RFC1035 section 4.1.3.
+        """
         for i in range(num):
             header = RRHeader(auth=self.auth)
             try:
