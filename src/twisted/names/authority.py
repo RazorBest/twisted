@@ -273,11 +273,10 @@ class PySourceAuthority(FileAuthority):
             raise ValueError("No zone defined in " + filename)
 
         self.records = {}
-        for rr in l["zone"]:
-            if isinstance(rr[1], dns.Record_SOA):
-                self.soa = rr
-            self.records.setdefault(rr[0].lower(), []).append(rr[1])
-
+        for name, record in l["zone"]:
+            if isinstance(record, dns.Record_SOA):
+                self.soa = (name, record)
+            self.records.setdefault(name, []).append(record)
     def wrapRecord(self, type):
         def wrapRecordFunc(name, *arg, **kw):
             return (dns.domainString(name), type(*arg, **kw))
@@ -385,7 +384,7 @@ class BindAuthority(FileAuthority):
         # If the origin changed, reflect that within the instance.
         self.origin = origin
 
-    def addRecord(self, owner, ttl, type, domain, cls, rdata):
+    def buildRecord(self, owner, ttl, type, domain, cls, rdata):
         """
         Add a record to our authority.  Expand domain with origin if necessary.
 
@@ -411,13 +410,13 @@ class BindAuthority(FileAuthority):
             domain = domain + b"." + owner[:-1]
         else:
             domain = domain[:-1]
-        f = getattr(self, f"class_{cls}", None)
+        f = getattr(self, f"buildRecord_{cls}", None)
         if f:
-            f(ttl, type, domain, rdata)
+            return f(ttl, type, domain, rdata)
         else:
             raise NotImplementedError(f"Record class {cls!r} not supported")
 
-    def class_IN(self, ttl, type, domain, rdata):
+    def buildRecord_IN(self, ttl, type, domain, rdata):
         """
         Simulate a class IN and recurse into the actual class.
 
@@ -437,10 +436,8 @@ class BindAuthority(FileAuthority):
         if record:
             r = record(*rdata)
             r.ttl = ttl
-            self.records.setdefault(domain.lower(), []).append(r)
 
-            if type == "SOA":
-                self.soa = (domain, r)
+            return (domain, r)
         else:
             raise NotImplementedError(
                 f"Record type {nativeString(type)!r} not supported"
@@ -499,4 +496,7 @@ class BindAuthority(FileAuthority):
         type = line[0]
         rdata = line[1:]
 
-        self.addRecord(owner, ttl, nativeString(type), domain, nativeString(cls), rdata)
+        fullDomain, record = self.buildRecord(owner, ttl, nativeString(type), domain, nativeString(cls), rdata)
+        if nativeString(type) == "SOA":
+            self.soa = (fullDomain.lower(), record)
+        self.records.setdefault(fullDomain, []).append(record)
